@@ -1,0 +1,84 @@
+apiVersion: kafka.strimzi.io/v1beta2
+kind: Kafka
+metadata:
+  name: my-cluster
+  namespace: kafka
+spec:
+  kafka:
+    replicas: 1
+    listeners:
+      - name: plain
+        port: 9092
+        type: internal
+        tls: false
+      - name: tls
+        port: 9093
+        type: internal
+        tls: true
+        authentication:
+          type: tls
+      - name: external
+        port: 9094
+        type: nodeport
+        tls: false
+    storage:
+      type: jbod
+      volumes:
+      - id: 0
+        type: persistent-claim
+        size: 100Gi
+        deleteClaim: false
+    config:
+      offsets.topic.replication.factor: 1
+      transaction.state.log.replication.factor: 1
+      transaction.state.log.min.isr: 1
+    template:
+      statefulset:
+        metadata:
+          labels:
+            app: kafka-cluster-demo-app-log
+            version: 1.0
+      pod:
+        metadata:
+          labels:
+            app: kafka-cluster-demo-app-log
+            version: 1.0
+          # annotations:
+          #   sidecar.istio.io/inject: "true"
+  zookeeper:
+    replicas: 1
+    storage:
+      type: persistent-claim
+      size: 100Gi
+      deleteClaim: false
+    template:
+      statefulset:
+        metadata:
+          labels:
+            app: kafka-zookeeper-demo-app-log
+            version: 1.0
+      pod:
+        metadata:
+          labels:
+            app: kafka-zookeeper-demo-app-log
+            version: 1.0
+          # annotations:
+          #   sidecar.istio.io/inject: "true"
+  entityOperator:
+    topicOperator: {}
+    userOperator: {}
+    template:
+      deployment:
+        metadata:
+          labels:
+            app: kafka-entity-operator-demo-app-log
+            version: 1.0
+            app-type: entity-operator
+      pod:
+        metadata:
+          labels:
+            app: kafka-entity-operator-demo-app-log
+            version: 1.0
+            app-type: entity-operator
+          # annotations:
+          #   sidecar.istio.io/inject: "true"
